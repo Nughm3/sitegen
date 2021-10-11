@@ -2,8 +2,9 @@
 name = "sitegen"
 version = "0.1.0"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = "Nughm3 <manhei5001@gmail.com>"
+description = "Simple rusty static site generator"
+license = "MIT"
 
 [dependencies]
 pulldown-cmark = "0.8.0"
