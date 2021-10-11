@@ -2,7 +2,6 @@
 name = "sitegen"
 version = "0.1.0"
 edition = "2018"
-authors = "Nughm3 <manhei5001@gmail.com>"
 description = "Simple rusty static site generator"
 license = "MIT"
 
