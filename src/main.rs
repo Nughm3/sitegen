@@ -1,8 +1,7 @@
 use pulldown_cmark::{html, Options, Parser};
 use sitegen::ThreadPool;
-use sitegen::projects;
 use std::io::prelude::*;
-use std::io::ErrorKind::{self, AlreadyExists, PermissionDenied};
+use std::io::ErrorKind::{AlreadyExists, PermissionDenied};
 use std::net::{TcpListener, TcpStream};
 use std::{env, fs, process};
 
@@ -31,24 +30,35 @@ fn main() {
 
     if let Some(cmd) = config.get(0) {
         match cmd {
-            "new" => new(true, config.get(1)),
-            "init" => new(false, config.get(1)),
+            "new" => new(config.get(1)),
+            "init" => {
+                if let Ok(()) = init() {
+                    println!("Successfully created new project");
+                } else {
+                    eprintln!("A problem occured in the creation of the new project");
+                }
+            }
+            "run" => {
+                if let Err(_) = fs::File::open("./server.json") {
+                    eprintln!("There isn't a project in this directory.");
+                    process::exit(1);
+                }
+                let listener = TcpListener::bind(ADDRESS).unwrap();
+                let pool = ThreadPool::new(THREADS);
+
+                for stream in listener.incoming() {
+                    let stream = stream.unwrap();
+                    pool.execute(|| handle(stream));
+                }
+            }
             _ => help(),
         }
     } else {
         help()
     }
-
-    // let listener = TcpListener::bind(ADDRESS).unwrap();
-    // let pool = ThreadPool::new(THREADS);
-
-    // for stream in listener.incoming() {
-    //     let stream = stream.unwrap();
-    //     pool.execute(|| process(stream));
-    // }
 }
 
-fn process(mut stream: TcpStream) {
+fn handle(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).expect("Failed to read to buffer");
 
@@ -75,28 +85,49 @@ fn process(mut stream: TcpStream) {
     stream.flush().expect("Failed to flush stream");
 }
 
-fn new(dir_exists: bool, name: Option<&str>) {
+fn new(name: Option<&str>) {
     if let Some(n) = name {
-        if !dir_exists {
-            if let Err(e) = fs::create_dir_all(format!("{}/index", n)) {
-                match e.kind() {
-                    AlreadyExists => println!("The directory already exists!"),
-                    PermissionDenied => {
-                        println!("You don't have permission to make a website in this folder!")
-                    }
-                    _ => {
-                        println!("An unexpected error occured while trying to create the website.")
-                    }
-                };
+        if let Err(e) = fs::create_dir(n) {
+            match e.kind() {
+                AlreadyExists => eprintln!("The directory already exists!"),
+                PermissionDenied => {
+                    eprintln!("You don't have permission to make a website in this folder!")
+                }
+                _ => {
+                    eprintln!("An unexpected error occured while trying to create the website.")
+                }
+            };
+            process::exit(1);
+        } else {
+            env::set_current_dir(n).expect("Failed to change to the newly created project");
+            if let Ok(()) = init() {
+                println!("Successfully created new project");
+            } else {
+                eprintln!("A problem occured in the creation of the new project.\n(Does a project already exist at that location?)");
                 process::exit(1);
             }
         }
     } else {
-        println!("Please provide a name for the new website!");
+        eprintln!("Please provide a name for the new website!");
         process::exit(1);
     }
 }
 
+fn init() -> Result<(), Box<dyn std::error::Error>> {
+    fs::File::create("./server.json")?; // Server configuration file
+
+    fs::create_dir("./templates")?; // Used to store the templates which each page will inherit from
+    fs::File::create("templates/base.html")?; // Base template
+    fs::File::create("templates/base.css")?;
+    fs::File::create("templates/not_found.html")?; // 404 Not Found template
+    fs::File::create("templates/not_found.css")?;
+
+    fs::create_dir("./index")?; // A default webpage used as the entry point
+    fs::File::create("index/index.md")?;
+
+    Ok(())
+}
+
 fn help() {
-    unimplemented!("WIP");
+    println!("sitegen - Markdown based static site generator\n");
 }
