@@ -3,6 +3,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 
+pub mod http;
+pub mod markdown;
+pub mod server;
+
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: mpsc::Sender<Message>,
@@ -16,13 +20,6 @@ enum Message {
 }
 
 impl ThreadPool {
-    /// Create a new ThreadPool.
-    ///
-    /// The size is the number of threads in the pool.
-    ///
-    /// # Panics
-    ///
-    /// The `new` function will panic if the size is zero.
     pub fn new(size: usize) -> ThreadPool {
         assert!(size > 0);
 
@@ -98,4 +95,8 @@ impl Worker {
             thread: Some(thread),
         }
     }
+}
+
+pub fn create_templates() {
+    unimplemented!();
 }
