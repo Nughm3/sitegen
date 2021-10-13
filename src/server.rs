@@ -1,14 +1,18 @@
 use super::*;
 use fs_extra::{copy_items, dir::CopyOptions};
+use glob::glob;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::{
+    collections::HashMap,
     env,
     ffi::OsStr,
     fs,
     io::{self, ErrorKind},
-    path::Path,
+    path::{Path, PathBuf},
     process,
+    rc::Rc,
+    sync::Arc,
 };
 use walkdir::WalkDir;
 
@@ -21,10 +25,14 @@ pub fn run() -> io::Result<()> {
     }
     let mut f = fs::File::open("server.json")?;
     let config = config::load(&mut f)?;
-    
-    println!("{:?}", config);
 
-    let (name, address, port, threads, map) = (config.name, config.address, config.port, config.threads, config.template_maps);
+    let (name, address, port, threads, map) = (
+        config.name,
+        config.address,
+        config.port,
+        config.threads,
+        config.template_maps,
+    );
 
     println!("sitegen v{} by Nughm3", VERSION);
     println!("Starting server for project {}\n", name);
@@ -53,12 +61,12 @@ pub fn run() -> io::Result<()> {
         .for_each(|f| {
             if let Ok(()) = markdown::parse(f.path()) {
                 println!(
-                    "- Successfully parsed {} into HTML",
+                    " - Successfully parsed {} into HTML",
                     &f.path().as_os_str().to_str().unwrap()[2..]
                 );
             } else {
                 eprintln!(
-                    "- Failed to parse {} into HTML",
+                    " - Failed to parse {} into HTML",
                     &f.path().as_os_str().to_str().unwrap()[2..]
                 );
                 failures += 1;
@@ -81,6 +89,9 @@ pub fn run() -> io::Result<()> {
         }
     }
 
+    let map = route(map).expect("Failed to generate route map");
+    let map = Arc::new(map);
+
     // Start the server
     println!("\nStarting server... (CTRL-C to stop)");
     let listener = TcpListener::bind(format!("{}:{}", &address, &port))?;
@@ -89,35 +100,62 @@ pub fn run() -> io::Result<()> {
 
     for stream in listener.incoming() {
         let stream = stream?;
-        pool.execute(|| handle(stream).expect("An issue occurred on a thread"));
+        let thread_map = Arc::clone(&map);
+        pool.execute(move || handle(stream, thread_map).expect("An issue occurred on a thread"));
     }
 
     Ok(())
 }
 
-fn handle(mut stream: TcpStream) -> io::Result<()> {
+fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> io::Result<()> {
+    use http::*;
+
     let mut buffer = [0; 1024];
     stream.read(&mut buffer)?;
 
-    let get = b"GET / HTTP/1.1\r\n";
+    use std::str;
+    let buf = str::from_utf8(&buffer);
+    println!("{:?}", buf);
+    println!("{:?}", map);
 
-    let (status, filename) = if buffer.starts_with(get) {
-        ("HTTP/1.1 200 OK", "index.html")
-    } else {
-        ("HTTP/1.1 404 NOT FOUND", "404.html")
-    };
-
-    let contents = fs::read_to_string(filename)?;
-
-    let response = format!(
-        "{}\r\nContent-Length: {}\r\n\r\n{}",
-        status,
-        contents.len(),
-        contents
-    );
-
-    stream.write(response.as_bytes())?;
-    stream.flush()?;
+//     let get = b"GET / HTTP/1.1\r\n";
+// 
+//     let (status, filename) = if buffer.starts_with(get) {
+//         ("HTTP/1.1 200 OK", "index.html")
+//     } else {
+//         ("HTTP/1.1 404 NOT FOUND", "404.html")
+//     };
+// 
+//     let contents = fs::read_to_string(filename)?;
+// 
+//     let response = format!(
+//         "{}\r\nContent-Length: {}\r\n\r\n{}",
+//         status,
+//         contents.len(),
+//         contents
+//     );
+// 
+//     stream.write(response.as_bytes())?;
+//     stream.flush()?;
 
     Ok(())
+}
+
+fn route(
+    custom: HashMap<String, PathBuf>,
+) -> Result<HashMap<String, PathBuf>, Box<dyn std::error::Error>> {
+    let mut map = HashMap::new();
+    for entry in glob("**/*.html")? {
+        let entry = Rc::new(entry?);
+        let route = Rc::clone(&entry)
+            .file_stem()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned();
+        let file = Rc::clone(&entry).to_path_buf();
+        map.insert(route, file);
+    }
+    map.insert("/".to_string(), Path::new("index.html").to_path_buf());
+    Ok(map.into_iter().chain(custom).collect())
 }

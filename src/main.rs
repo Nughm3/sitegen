@@ -115,7 +115,7 @@ fn init(name: String) -> io::Result<()> {
     } else {
         let name = env::current_dir()?;
         let name = name.components().last().unwrap().as_os_str().to_str().to_owned().unwrap();
-        config::configure(name.to_string())?;
+        config::configure(name.to_owned())?;
     }
 
     Ok(())

@@ -41,12 +41,12 @@ pub fn parse(file: &Path) -> io::Result<()> {
         process::exit(1);
     }
     for i in 0..count - 1 {
-        output.push_str(format!("{}\n", &template.lines().nth(i).unwrap().to_string()).as_str());
+        output.push_str(format!("{}\n", &template.lines().nth(i).unwrap().to_owned()).as_str());
     }
     output.push_str(&html_output);
     for i in count..template.lines().count() {
         if let Some(s) = template.lines().nth(i) {
-            output.push_str(format!("{}\n", &s.to_string()).as_str());
+            output.push_str(format!("{}\n", &s.to_owned()).as_str());
         } else {
             break;
         }

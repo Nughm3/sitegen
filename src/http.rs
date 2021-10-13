@@ -1,3 +1,6 @@
+use std::str::{Bytes, from_utf8};
+use RequestMethod::*;
+
 const HTTP_VERSION: &str = "HTTP/1.1";
 
 #[derive(Debug)]
@@ -11,6 +14,28 @@ pub enum RequestMethod {
     Options,
     Trace,
     Patch,
+}
+
+impl From<RequestMethod> for String {
+    fn from(method: RequestMethod) -> Self {
+        format!("{:?}", method).to_uppercase()
+    }
+}
+
+impl From<&str> for RequestMethod {
+    fn from(s: &str) -> Self {
+        match s {
+            "GET" => Get,
+            "HEAD" => Head,
+            "POST" => Post,
+            "PUT" => Put,
+            "DELETE" => Delete,
+            "CONNECT" => Connect,
+            "OPTIONS" => Options,
+            "TRACE" => Trace,
+            "PATCH" => Patch,
+        }
+    }
 }
 
 pub struct HttpRequest<'a> {
@@ -29,6 +54,24 @@ impl Default for HttpRequest<'_> {
             version: HTTP_VERSION,
             headers: None,
             body: None,
+        }
+    }
+}
+
+impl From<&[u8]> for HttpRequest<'_> {
+    fn from(s: &[u8]) -> Self {
+        let buffer = from_utf8(s).expect("Failed to parse to string");
+        let method: RequestMethod = buffer.split_whitespace().nth(0).unwrap().into();
+        let route: &str = buffer.split_whitespace().nth(1).unwrap();
+        let version: &str = buffer.split_whitespace().nth(2).unwrap().split("\r\n").nth(0).unwrap();
+        let headers: Option<&str> = buffer.split("\r\n").nth(1);
+        let body: Option<&str> = buffer.split("\r\n").nth(2);
+        HttpRequest {
+            method,
+            route,
+            version,
+            headers,
+            body,
         }
     }
 }
@@ -82,7 +125,6 @@ impl HttpResponse<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::RequestMethod::*;
     use super::*;
 
     // Request formatting tests
