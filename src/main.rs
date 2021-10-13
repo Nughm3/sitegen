@@ -9,9 +9,6 @@ use std::{
     process,
 };
 
-const THREADS: usize = 4;
-const ADDRESS: &str = "127.0.0.1:8000";
-
 struct Args(Vec<String>);
 
 impl Args {
@@ -44,13 +41,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let arg_1 = args.get(1);
         match cmd {
             "new" => new(arg_1),
-            "run" => server::run(ADDRESS, THREADS)?,
+            "run" => server::run()?,
             "add" => op(Add, arg_1)?,
             "rm" => op(Remove, arg_1)?,
             "edit" => op(Edit, arg_1)?,
             "config" => config()?,
             "init" => {
-                if let Ok(()) = init() {
+                if let Ok(()) = init("".to_owned()) {
                     println!("Successfully created new project");
                 } else {
                     eprintln!("A problem occured in the creation of the new project");
@@ -80,7 +77,7 @@ fn new(name: Option<&str>) {
             process::exit(1);
         } else {
             env::set_current_dir(n).expect("Failed to change to the newly created project");
-            if let Ok(()) = init() {
+            if let Ok(()) = init(n.to_owned()) {
                 println!("Successfully created new project");
             } else {
                 eprintln!("A problem occured in the creation of the new project.");
@@ -98,7 +95,7 @@ fn new(name: Option<&str>) {
     }
 }
 
-fn init() -> io::Result<()> {
+fn init(name: String) -> io::Result<()> {
     type P = Path;
     File::create("server.json")?; // Server configuration file
     File::create("log.txt")?; // Server log file
@@ -111,6 +108,15 @@ fn init() -> io::Result<()> {
 
     fs::create_dir("pages")?; // Used to store the user's pages
     File::create(P::new("pages/index.md"))?;
+
+    // create_templates()?;
+    if name != String::from("") {
+        config::configure(name)?;
+    } else {
+        let name = env::current_dir()?;
+        let name = name.components().last().unwrap().as_os_str().to_str().to_owned().unwrap();
+        config::configure(name.to_string())?;
+    }
 
     Ok(())
 }

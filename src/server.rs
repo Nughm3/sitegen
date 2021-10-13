@@ -12,15 +12,22 @@ use std::{
 };
 use walkdir::WalkDir;
 
-pub fn run(addr: &str, threads: usize) -> io::Result<()> {
+pub fn run() -> io::Result<()> {
     // Run a check for a server configuration file here
     // If it's absent, the server should not start
     if !Path::new("server.json").exists() {
         eprintln!("There isn't a project in this directory.");
         process::exit(1);
     }
+    let mut f = fs::File::open("server.json")?;
+    let config = config::load(&mut f)?;
+    
+    println!("{:?}", config);
 
-    println!("sitegen v{} by Nughm3\n", VERSION);
+    let (name, address, port, threads, map) = (config.name, config.address, config.port, config.threads, config.template_maps);
+
+    println!("sitegen v{} by Nughm3", VERSION);
+    println!("Starting server for project {}\n", name);
 
     // Set up the directory where Markdown will be parsed into HTML
     // This will recursively copy the entire pages directory to `compiled`.
@@ -76,9 +83,9 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
 
     // Start the server
     println!("\nStarting server... (CTRL-C to stop)");
-    let listener = TcpListener::bind(&addr)?;
-    let pool = ThreadPool::new(threads);
-    println!("Bound to {} with {} threads", addr, threads);
+    let listener = TcpListener::bind(format!("{}:{}", &address, &port))?;
+    let pool = ThreadPool::new(threads.into());
+    println!("Bound to {}:{} with {} threads\n", address, port, threads);
 
     for stream in listener.incoming() {
         let stream = stream?;

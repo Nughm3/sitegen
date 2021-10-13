@@ -1,10 +1,5 @@
 use pulldown_cmark::{html, Options, Parser};
-use std::{
-    fs,
-    io::{self, Read},
-    path::Path,
-    process,
-};
+use std::{env, fs, io::{self, Read}, path::Path, process};
 
 pub fn parse(file: &Path) -> io::Result<()> {
     // Enable all modern Markdown features
@@ -21,7 +16,9 @@ pub fn parse(file: &Path) -> io::Result<()> {
         f.read_to_string(&mut template)?;
     } else {
         eprintln!("Was unable to locate template `base.html` file, creating it...");
-        super::create_templates();
+        env::set_current_dir("..")?;
+        super::create_templates()?;
+        env::set_current_dir("compiled")?;
         parse(file)?;
     }
 

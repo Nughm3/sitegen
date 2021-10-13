@@ -8,6 +8,7 @@ pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub mod http;
 pub mod markdown;
 pub mod server;
+pub mod config;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
@@ -55,7 +56,7 @@ impl Drop for ThreadPool {
         println!("Shutting down all workers.");
 
         for worker in &mut self.workers {
-            println!("Shutting down worker {}", worker.id);
+            println!("Shutting down worker {}", worker.id + 1);
 
             if let Some(thread) = worker.thread.take() {
                 thread.join().unwrap();
@@ -76,12 +77,12 @@ impl Worker {
 
             match message {
                 Message::NewJob(job) => {
-                    println!("Worker {} got a job; executing.", id);
+                    println!("Worker {} got a job; executing.", id + 1);
 
                     job();
                 }
                 Message::Terminate => {
-                    println!("Worker {} was told to terminate.", id);
+                    println!("Worker {} was told to terminate.", id + 1);
 
                     break;
                 }
@@ -95,6 +96,7 @@ impl Worker {
     }
 }
 
-pub fn create_templates() {
+pub fn create_templates() -> std::io::Result<()> {
     unimplemented!();
+    Ok(())
 }
