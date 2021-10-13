@@ -3,6 +3,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 
+pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 pub mod http;
 pub mod markdown;
 pub mod server;

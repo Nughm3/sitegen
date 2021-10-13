@@ -20,6 +20,8 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
         process::exit(1);
     }
 
+    println!("sitegen v{} by Nughm3\n", VERSION);
+
     // Set up the directory where Markdown will be parsed into HTML
     // This will recursively copy the entire pages directory to `compiled`.
     if let Err(e) = fs::remove_dir_all("./compiled") {
@@ -34,20 +36,26 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
     copy_items(&vec!["./pages"], "./compiled", &copy_options).expect("Failed to copy files");
 
     // Find each markdown file and parse it to HTML
-    env::set_current_dir("./pages")?;
+    env::set_current_dir("./compiled")?;
     let mut failures = 0;
+    println!("Parsing Markdown files...");
     let _ = WalkDir::new(".")
         .into_iter()
         .filter_map(|f| f.ok())
         .filter(|f| Path::new(f.path()).extension() == Some(OsStr::new("md")))
         .for_each(|f| {
             if let Ok(()) = markdown::parse(f.path()) {
-                println!("Successfully parsed {:?} into HTML", f.path());
+                println!("- Successfully parsed {:?} into HTML", f.path());
             } else {
-                eprintln!("Failed to parse {:?} into HTML", f.path());
+                eprintln!("- Failed to parse {:?} into HTML", f.path());
                 failures += 1;
             }
         });
+    let _ = WalkDir::new(".")
+        .into_iter()
+        .filter_map(|f| f.ok())
+        .filter(|f| Path::new(f.path()).extension() == Some(OsStr::new("md")))
+        .for_each(|f| fs::remove_file(f.path()).expect("Failed to remove a file"));
     if failures > 0 {
         eprint!(
             "{} files failed to parse into HTML. Start server anyways? [y/N] ",
@@ -61,7 +69,7 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
     }
 
     // Start the server
-    println!("Starting server...");
+    println!("\nStarting server... (CTRL-C to stop)");
     let listener = TcpListener::bind(&addr)?;
     let pool = ThreadPool::new(threads);
     println!("Bound to {} with {} threads", addr, threads);

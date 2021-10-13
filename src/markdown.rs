@@ -1,9 +1,5 @@
 use pulldown_cmark::{html, Options, Parser};
-use std::{
-    fs,
-    io::{self, Read},
-    path::Path,
-};
+use std::{fs, io::{self, Read}, path::Path, process};
 
 pub fn parse(file: &Path) -> io::Result<()> {
     // Enable all modern Markdown features
@@ -38,6 +34,10 @@ pub fn parse(file: &Path) -> io::Result<()> {
         }
         count += 1;
     }
+    if count == template.lines().count() {
+        println!("Invalid template!");
+        process::exit(1);
+    }
     for i in 0..count - 1 {
         output.push_str(format!("{}\n", &template.lines().nth(i).unwrap().to_string()).as_str());
     }
@@ -51,7 +51,8 @@ pub fn parse(file: &Path) -> io::Result<()> {
     }
     fs::write(
         format!(
-            "../compiled/{}.html",
+            "{}/{}.html",
+            Path::new(file).parent().unwrap().to_str().unwrap(),
             Path::new(file).file_stem().unwrap().to_str().unwrap()
         ),
         output,
