@@ -1,7 +1,9 @@
 use super::*;
+use fs_extra::{copy_items, dir::CopyOptions};
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::{
+    env,
     ffi::OsStr,
     fs,
     io::{self, ErrorKind},
@@ -13,22 +15,26 @@ use walkdir::WalkDir;
 pub fn run(addr: &str, threads: usize) -> io::Result<()> {
     // Run a check for a server configuration file here
     // If it's absent, the server should not start
-    if let Err(_) = fs::File::open("./server.json") {
+    if !Path::new("./server.json").exists() {
         eprintln!("There isn't a project in this directory.");
         process::exit(1);
     }
 
     // Set up the directory where Markdown will be parsed into HTML
+    // This will recursively copy the entire pages directory to `compiled`.
     if let Err(e) = fs::remove_dir_all("./compiled") {
-        match e.kind() {
-            ErrorKind::PermissionDenied => process::exit(1),
-            _ => fs::create_dir("./compiled")?,
+        if e.kind() == ErrorKind::PermissionDenied {
+            process::exit(1)
         }
-    } else {
-        fs::create_dir("./compiled")?;
     }
+    let copy_options = CopyOptions {
+        copy_inside: true,
+        ..Default::default()
+    };
+    copy_items(&vec!["./pages"], "./compiled", &copy_options).expect("Failed to copy files");
 
     // Find each markdown file and parse it to HTML
+    env::set_current_dir("./pages")?;
     let mut failures = 0;
     let _ = WalkDir::new(".")
         .into_iter()
@@ -43,8 +49,8 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
             }
         });
     if failures > 0 {
-        eprintln!(
-            "{} files failed to parse into HTML. Start server anyways? [y/N]",
+        eprint!(
+            "{} files failed to parse into HTML. Start server anyways? [y/N] ",
             failures
         );
         let mut response = String::new();

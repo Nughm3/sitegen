@@ -15,10 +15,9 @@ pub fn parse(file: &Path) -> io::Result<()> {
     options.insert(Options::ENABLE_TASKLISTS);
 
     // Open a template and apply it
-    if let Ok(mut f) = fs::File::open("templates/base.html") {
-        let mut template = String::new();
+    let mut template = String::new();
+    if let Ok(mut f) = fs::File::open("../templates/base.html") {
         f.read_to_string(&mut template)?;
-        println!("{}", template);
     } else {
         eprintln!("Was unable to locate template `base.html` file, creating it...");
         super::create_templates();
@@ -31,6 +30,32 @@ pub fn parse(file: &Path) -> io::Result<()> {
     html::push_html(&mut html_output, parser);
 
     // Write the template with the Markdown into the output file
+    let mut output = String::new();
+    let mut count = 1;
+    for line in template.lines() {
+        if line.contains("{{ body }}") {
+            break;
+        }
+        count += 1;
+    }
+    for i in 0..count - 1 {
+        output.push_str(format!("{}\n", &template.lines().nth(i).unwrap().to_string()).as_str());
+    }
+    output.push_str(&html_output);
+    for i in count..template.lines().count() {
+        if let Some(s) = template.lines().nth(i) {
+            output.push_str(format!("{}\n", &s.to_string()).as_str());
+        } else {
+            break;
+        }
+    }
+    fs::write(
+        format!(
+            "../compiled/{}.html",
+            Path::new(file).file_stem().unwrap().to_str().unwrap()
+        ),
+        output,
+    )?;
 
     Ok(())
 }

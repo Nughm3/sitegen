@@ -76,6 +76,7 @@ fn new(name: Option<&str>) {
 fn init() -> io::Result<()> {
     type P = Path;
     fs::File::create("server.json")?; // Server configuration file
+    fs::File::create("log.txt")?; // Server log file
 
     fs::create_dir("templates")?; // Used to store the templates which each page will inherit from
     fs::File::create(P::new("templates/base.html"))?; // Base template
@@ -83,8 +84,8 @@ fn init() -> io::Result<()> {
     fs::File::create(P::new("templates/not_found.html"))?; // 404 Not Found template
     fs::File::create(P::new("templates/not_found.css"))?;
 
-    fs::create_dir("index")?; // A default webpage used as the entry point
-    fs::File::create(P::new("index/index.md"))?;
+    fs::create_dir_all(P::new("pages/index"))?; // A default webpage used as the entry point
+    fs::File::create(P::new("pages/index/index.md"))?;
 
     Ok(())
 }
