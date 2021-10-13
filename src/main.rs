@@ -1,7 +1,6 @@
 use sitegen::*;
 use std::io::ErrorKind::{AlreadyExists, PermissionDenied};
 use std::{
-    collections::HashMap,
     env,
     error::Error,
     fs::{self, File},
@@ -38,6 +37,7 @@ enum OpType {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    use OpType::*;
     let args = Args::new();
 
     if let Some(cmd) = args.get(0) {
@@ -45,9 +45,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         match cmd {
             "new" => new(arg_1),
             "run" => server::run(ADDRESS, THREADS)?,
-            "add" => op(OpType::Add, arg_1)?,
-            "rm" => op(OpType::Remove, arg_1)?,
-            "edit" => op(OpType::Edit, arg_1)?,
+            "add" => op(Add, arg_1)?,
+            "rm" => op(Remove, arg_1)?,
+            "edit" => op(Edit, arg_1)?,
             "config" => config()?,
             "init" => {
                 if let Ok(()) = init() {
@@ -122,14 +122,17 @@ fn op(action: OpType, name: Option<&str>) -> io::Result<()> {
                 env::set_current_dir("pages")?;
                 fs::create_dir(&n)?;
                 File::create(format!("{n}/{n}.md", n = n))?;
-            },
+                println!("Created page {}", n);
+            }
             OpType::Remove => {
                 env::set_current_dir("pages")?;
                 if Path::new(n).exists() {
                     eprint!("This will remove the page {}, continue? [Y/n] ", n);
                     let mut action = String::new();
                     io::stdin().read_line(&mut action)?;
-                    if action.to_lowercase() != String::from("n") {
+                    if action.to_lowercase() == String::from("n") {
+                        println!("Cancelled!");
+                    } else {
                         fs::remove_dir_all(n)?;
                     }
                 } else {
@@ -184,26 +187,11 @@ fn help(unrecognized: bool) {
             VERSION
         );
     }
-
-    let mut commands = HashMap::new();
-    commands.insert("  new <name> ", "Create a new site with a name");
-    commands.insert(
-        "  init       ",
-        "Initialize a site in the current working directory",
-    );
-    commands.insert(
-        "  run        ",
-        "Compiles all Markdown files to HTML and starts the server",
-    );
-    commands.insert("  add <name> ", "Add a page");
-    commands.insert("  rm <name>  ", "Remove a page");
-    commands.insert("  edit <name>", "Edit a page's file (Requires EDITOR)");
-    commands.insert(
-        "  config     ",
-        "Edit your project's configuration file (Requires EDITOR)",
-    );
-
-    for (command, action) in commands {
-        eprintln!("{} -> {}", command, action);
-    }
+    eprintln!("  new <name>  -> Create a new site with a name");
+    eprintln!("  init        -> Initialize a site in the current working directory");
+    eprintln!("  run         -> Compiles all Markdown files to HTML and starts the server");
+    eprintln!("  add <name>  -> Add a page");
+    eprintln!("  rm <name>   -> Remove a page");
+    eprintln!("  edit <name> -> Edit a page's file (Requires EDITOR)");
+    eprintln!("  config      -> Edit your project's configuration file (Requires EDITOR)");
 }
