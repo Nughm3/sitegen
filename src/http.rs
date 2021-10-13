@@ -82,8 +82,8 @@ impl HttpResponse<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::RequestMethod::*;
+    use super::*;
 
     // Request formatting tests
     #[test]
@@ -124,7 +124,10 @@ mod tests {
             headers: Some("Connection: keep-alive"),
             ..Default::default()
         };
-        assert_eq!(request.format(), "GET / HTTP/1.1\r\nConnection: keep-alive\r\n")
+        assert_eq!(
+            request.format(),
+            "GET / HTTP/1.1\r\nConnection: keep-alive\r\n"
+        )
     }
     #[test]
     fn body_request() {
@@ -141,7 +144,10 @@ mod tests {
             body: Some("<p>Hi</p>"),
             ..Default::default()
         };
-        assert_eq!(request.format(), "GET / HTTP/1.1\r\nConnection: keep-alive\r\n<p>Hi</p>")
+        assert_eq!(
+            request.format(),
+            "GET / HTTP/1.1\r\nConnection: keep-alive\r\n<p>Hi</p>"
+        )
     }
 
     // Response formatting tests

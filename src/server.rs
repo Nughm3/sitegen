@@ -15,7 +15,7 @@ use walkdir::WalkDir;
 pub fn run(addr: &str, threads: usize) -> io::Result<()> {
     // Run a check for a server configuration file here
     // If it's absent, the server should not start
-    if !Path::new("./server.json").exists() {
+    if !Path::new("server.json").exists() {
         eprintln!("There isn't a project in this directory.");
         process::exit(1);
     }
@@ -24,7 +24,7 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
 
     // Set up the directory where Markdown will be parsed into HTML
     // This will recursively copy the entire pages directory to `compiled`.
-    if let Err(e) = fs::remove_dir_all("./compiled") {
+    if let Err(e) = fs::remove_dir_all("compiled") {
         if e.kind() == ErrorKind::PermissionDenied {
             process::exit(1)
         }
@@ -33,10 +33,10 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
         copy_inside: true,
         ..Default::default()
     };
-    copy_items(&vec!["./pages"], "./compiled", &copy_options).expect("Failed to copy files");
+    copy_items(&vec!["pages"], "compiled", &copy_options).expect("Failed to copy files");
 
     // Find each markdown file and parse it to HTML
-    env::set_current_dir("./compiled")?;
+    env::set_current_dir("compiled")?;
     let mut failures = 0;
     println!("Parsing Markdown files...");
     let _ = WalkDir::new(".")
@@ -45,9 +45,15 @@ pub fn run(addr: &str, threads: usize) -> io::Result<()> {
         .filter(|f| Path::new(f.path()).extension() == Some(OsStr::new("md")))
         .for_each(|f| {
             if let Ok(()) = markdown::parse(f.path()) {
-                println!("- Successfully parsed {:?} into HTML", f.path());
+                println!(
+                    "- Successfully parsed {} into HTML",
+                    &f.path().as_os_str().to_str().unwrap()[2..]
+                );
             } else {
-                eprintln!("- Failed to parse {:?} into HTML", f.path());
+                eprintln!(
+                    "- Failed to parse {} into HTML",
+                    &f.path().as_os_str().to_str().unwrap()[2..]
+                );
                 failures += 1;
             }
         });
