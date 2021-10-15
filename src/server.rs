@@ -1,4 +1,5 @@
 use super::*;
+use std::str::from_utf8;
 use fs_extra::{copy_items, dir::CopyOptions};
 use glob::glob;
 use std::io::prelude::*;
@@ -113,30 +114,43 @@ fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> io::Resu
     let mut buffer = [0; 1024];
     stream.read(&mut buffer)?;
 
-    use std::str;
-    let buf = str::from_utf8(&buffer);
-    println!("{:?}", buf);
-    println!("{:?}", map);
+    let req: HttpRequest = {
+        let buffer = from_utf8(&buffer).expect("Failed to parse to string");
+        let method: String = buffer.split_whitespace().nth(0).unwrap().into();
+        let method: RequestMethod = method.into();
+        let route: String = buffer.split_whitespace().nth(1).unwrap().to_owned();
+        let version: String = buffer
+            .split_whitespace()
+            .nth(2)
+            .unwrap()
+            .split("\r\n")
+            .nth(0)
+            .unwrap()
+            .to_owned();
+        let headers = Some(buffer.split("\r\n").nth(1).unwrap().to_owned());
+        let body = Some(buffer.split("\r\n").nth(2).unwrap().to_owned());
+        HttpRequest {
+            method,
+            route,
+            version,
+            headers,
+            body,
+        }
+    };
 
-//     let get = b"GET / HTTP/1.1\r\n";
-// 
-//     let (status, filename) = if buffer.starts_with(get) {
-//         ("HTTP/1.1 200 OK", "index.html")
-//     } else {
-//         ("HTTP/1.1 404 NOT FOUND", "404.html")
-//     };
-// 
-//     let contents = fs::read_to_string(filename)?;
-// 
-//     let response = format!(
-//         "{}\r\nContent-Length: {}\r\n\r\n{}",
-//         status,
-//         contents.len(),
-//         contents
-//     );
-// 
-//     stream.write(response.as_bytes())?;
-//     stream.flush()?;
+    for (route, path) in map.iter() {
+        if route.contains(&req.route) {
+            let contents = fs::read_to_string(path)?;
+            let head = format!("Content-Length: {}", contents.len());
+            let response = HttpResponse {
+                headers: Some(head.as_str()),
+                body: Some(&contents),
+                ..Default::default()
+            };
+            stream.write(response.format().as_bytes())?;
+            stream.flush()?;
+        }
+    }
 
     Ok(())
 }
