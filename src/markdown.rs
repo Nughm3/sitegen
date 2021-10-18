@@ -1,5 +1,10 @@
 use pulldown_cmark::{html, Options, Parser};
-use std::{env, fs, io::{self, Read}, path::Path, process};
+use std::{
+    env, fs,
+    io::{self, Read},
+    path::Path,
+    process,
+};
 
 pub fn parse(file: &Path) -> io::Result<()> {
     // Enable all modern Markdown features

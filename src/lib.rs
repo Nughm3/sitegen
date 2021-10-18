@@ -5,10 +5,10 @@ use std::thread;
 
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+pub mod config;
 pub mod http;
 pub mod markdown;
 pub mod server;
-pub mod config;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,

@@ -114,13 +114,21 @@ fn init(name: String) -> io::Result<()> {
         config::configure(name)?;
     } else {
         let name = env::current_dir()?;
-        let name = name.components().last().unwrap().as_os_str().to_str().to_owned().unwrap();
+        let name = name
+            .components()
+            .last()
+            .unwrap()
+            .as_os_str()
+            .to_str()
+            .to_owned()
+            .unwrap();
         config::configure(name.to_owned())?;
     }
 
     Ok(())
 }
 
+// op for 'operation'
 fn op(action: OpType, name: Option<&str>) -> io::Result<()> {
     if let Some(n) = name {
         match action {

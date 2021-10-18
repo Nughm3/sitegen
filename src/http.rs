@@ -73,6 +73,7 @@ impl HttpRequest {
     }
 }
 
+#[derive(Debug)]
 pub struct HttpResponse<'a> {
     pub statuscode: u16,
     pub phrase: String,

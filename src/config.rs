@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{
-    collections::HashMap,
     default::Default,
     fs,
     io::{Read, Result},
@@ -14,7 +13,7 @@ pub struct Config {
     pub address: String,
     pub port: u16,
     pub threads: u8,
-    pub template_maps: HashMap<String, PathBuf>,
+    pub index_page: PathBuf,
 }
 
 impl Default for Config {
@@ -24,7 +23,7 @@ impl Default for Config {
             address: String::from("127.0.0.1"),
             port: 8000,
             threads: 4,
-            template_maps: HashMap::new(),
+            index_page: PathBuf::new(),
         }
     }
 }
