@@ -6,7 +6,9 @@ description = "Simple rusty static site generator"
 license = "MIT"
 
 [dependencies]
+ctrlc = "3.2.1"
 fs_extra = "1.2.0"
+log = "0.4.14"
 pulldown-cmark = "0.8.0"
 serde = { version = "1.0.130", default-features = false, features = ["derive"] }
 serde_json = "1.0.68"

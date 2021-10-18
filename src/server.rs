@@ -1,4 +1,5 @@
 use super::*;
+// use ctrlc;
 use fs_extra::{copy_items, dir::CopyOptions};
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
@@ -82,8 +83,6 @@ pub fn run() -> io::Result<()> {
         if response.to_lowercase() != String::from("y") {
             process::exit(1);
         }
-    } else {
-        println!("OK");
     }
 
     println!("\nGenerating routes...");
@@ -95,6 +94,12 @@ pub fn run() -> io::Result<()> {
     let listener = TcpListener::bind(format!("{}:{}", &address, &port))?;
     let pool = ThreadPool::new(threads.into());
     println!("Bound to {}:{} with {} threads\n", address, port, threads);
+
+    // Initialize the logging
+    match init_logging() {
+        Ok(_) => (),
+        Err(e) => eprintln!("Failed to init logging: {:?}", e),
+    };
 
     for stream in listener.incoming() {
         let stream = stream?;
@@ -159,6 +164,5 @@ fn route(index_page: Option<PathBuf>) -> io::Result<HashMap<String, PathBuf>> {
             println!(" * Routed {} to {}", route, f.path().to_str().unwrap());
             map.insert(route.to_owned(), f.path().to_path_buf());
         });
-    println!("OK");
     Ok(map)
 }

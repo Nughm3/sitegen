@@ -1,3 +1,7 @@
+use log::*;
+use simplelog::*;
+use std::error::Error;
+use std::fs::File;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -46,16 +50,16 @@ impl ThreadPool {
 
 impl Drop for ThreadPool {
     fn drop(&mut self) {
-        println!("Sending terminate message to all workers.");
+        info!("Sending terminate message to all workers.");
 
         for _ in &self.workers {
             self.sender.send(Message::Terminate).unwrap();
         }
 
-        println!("Shutting down all workers.");
+        info!("Shutting down all workers.");
 
         for worker in &mut self.workers {
-            println!("Shutting down worker {}", worker.id + 1);
+            info!("Shutting down worker {}", worker.id + 1);
 
             if let Some(thread) = worker.thread.take() {
                 thread.join().unwrap();
@@ -76,12 +80,12 @@ impl Worker {
 
             match message {
                 Message::NewJob(job) => {
-                    println!("Worker {} got a job; executing.", id + 1);
+                    info!("Worker {} got a job; executing.", id + 1);
 
                     job();
                 }
                 Message::Terminate => {
-                    println!("Worker {} was told to terminate.", id + 1);
+                    info!("Worker {} was told to terminate.", id + 1);
 
                     break;
                 }
@@ -93,4 +97,21 @@ impl Worker {
             thread: Some(thread),
         }
     }
+}
+
+pub fn init_logging() -> Result<(), Box<dyn Error>> {
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            File::create("log.txt")?,
+        ),
+    ])?;
+    Ok(())
 }
