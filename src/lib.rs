@@ -6,7 +6,6 @@ use std::thread;
 pub const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 pub mod config;
-pub mod http;
 pub mod markdown;
 pub mod server;
 
@@ -94,9 +93,4 @@ impl Worker {
             thread: Some(thread),
         }
     }
-}
-
-pub fn create_templates() -> std::io::Result<()> {
-    unimplemented!();
-    Ok(())
 }

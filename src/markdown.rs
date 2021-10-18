@@ -1,6 +1,7 @@
 use pulldown_cmark::{html, Options, Parser};
+use titlecase::titlecase;
 use std::{
-    env, fs,
+    fs,
     io::{self, Read},
     path::Path,
     process,
@@ -20,11 +21,8 @@ pub fn parse(file: &Path) -> io::Result<()> {
     if let Ok(mut f) = fs::File::open("../templates/base.html") {
         f.read_to_string(&mut template)?;
     } else {
-        eprintln!("Was unable to locate template `base.html` file, creating it...");
-        env::set_current_dir("..")?;
-        super::create_templates()?;
-        env::set_current_dir("compiled")?;
-        parse(file)?;
+        eprintln!("Was unable to locate template `base.html` file, exiting...");
+        process::exit(1);
     }
 
     let contents = fs::read_to_string(&file)?;
@@ -32,30 +30,10 @@ pub fn parse(file: &Path) -> io::Result<()> {
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
 
-    // Write the template with the Markdown into the output file
-    let mut output = String::new();
-    let mut count = 1;
-    for line in template.lines() {
-        if line.contains("{{ body }}") {
-            break;
-        }
-        count += 1;
-    }
-    if count == template.lines().count() {
-        println!("Invalid template!");
-        process::exit(1);
-    }
-    for i in 0..count - 1 {
-        output.push_str(format!("{}\n", &template.lines().nth(i).unwrap().to_owned()).as_str());
-    }
-    output.push_str(&html_output);
-    for i in count..template.lines().count() {
-        if let Some(s) = template.lines().nth(i) {
-            output.push_str(format!("{}\n", &s.to_owned()).as_str());
-        } else {
-            break;
-        }
-    }
+    let output = template
+        .replace("{{ body }}", &html_output)
+        .replace("{{ title }}", &titlecase(file.file_stem().unwrap().to_str().unwrap()));
+
     fs::write(
         format!(
             "{}/{}.html",
