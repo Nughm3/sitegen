@@ -1,12 +1,11 @@
 [package]
 name = "sitegen"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 description = "Simple rusty static site generator"
 license = "MIT"
 
 [dependencies]
-ctrlc = "3.2.1"
 fs_extra = "1.2.0"
 log = "0.4.14"
 pulldown-cmark = "0.8.0"
