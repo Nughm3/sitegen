@@ -1,7 +1,9 @@
+cargo-features = ["edition2021"]
+
 [package]
 name = "sitegen"
 version = "0.1.1"
-edition = "2018"
+edition = "2021"
 description = "Simple rusty static site generator"
 license = "MIT"
 
