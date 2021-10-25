@@ -1,11 +1,11 @@
 use pulldown_cmark::{html, Options, Parser};
-use titlecase::titlecase;
 use std::{
     fs,
     io::{self, Read},
     path::Path,
     process,
 };
+use titlecase::titlecase;
 
 pub fn parse(file: &Path) -> io::Result<()> {
     // Enable all modern Markdown features
@@ -30,9 +30,10 @@ pub fn parse(file: &Path) -> io::Result<()> {
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
 
-    let output = template
-        .replace("{{ body }}", &html_output)
-        .replace("{{ title }}", &titlecase(file.file_stem().unwrap().to_str().unwrap()));
+    let output = template.replace("{{ body }}", &html_output).replace(
+        "{{ title }}",
+        &titlecase(file.file_stem().unwrap().to_str().unwrap()),
+    );
 
     fs::write(
         format!(

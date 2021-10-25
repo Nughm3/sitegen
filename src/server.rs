@@ -5,6 +5,7 @@ use std::net::{TcpListener, TcpStream};
 use std::{
     collections::HashMap,
     env,
+    error::Error,
     ffi::OsStr,
     fs,
     io::{self, ErrorKind},
@@ -14,7 +15,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-pub fn run() -> io::Result<()> {
+pub fn run() -> Result<(), Box<dyn Error>> {
     // Run a check for a server configuration file here
     // If it's absent, the server should not start
     if !Path::new("server.json").exists() {
@@ -38,6 +39,7 @@ pub fn run() -> io::Result<()> {
     // This will recursively copy the entire pages directory to `compiled`.
     if let Err(e) = fs::remove_dir_all("compiled") {
         if e.kind() == ErrorKind::PermissionDenied {
+            eprintln!("Could not initialize `compiled` folder");
             process::exit(1)
         }
     }
@@ -45,7 +47,7 @@ pub fn run() -> io::Result<()> {
         copy_inside: true,
         ..Default::default()
     };
-    copy_items(&vec!["pages"], "compiled", &copy_options).expect("Failed to copy files");
+    copy_items(&vec!["pages"], "compiled", &copy_options)?;
 
     // Find each markdown file and parse it to HTML
     env::set_current_dir("compiled")?;
@@ -61,14 +63,14 @@ pub fn run() -> io::Result<()> {
                 " * Successfully parsed {} into HTML",
                 &file.path().as_os_str().to_str().unwrap()[2..]
             );
-            fs::remove_file(file.path()).expect("Failed to remove a file");
+            fs::remove_file(file.path())?;
         } else {
             eprintln!(
                 " * Failed to parse {} into HTML",
                 &file.path().as_os_str().to_str().unwrap()[2..]
             );
             failures += 1;
-            fs::remove_file(file.path()).expect("Failed to remove a file");
+            fs::remove_file(file.path())?;
         }
     }
 

@@ -41,7 +41,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let arg_1 = args.get(1);
         match cmd {
             "new" => new(arg_1),
-            "run" => server::run()?,
+            "run" => {
+                if let Err(e) = server::run() {
+                    eprintln!("Failed to run server:\n{:?}", e);
+                    process::exit(1);
+                }
+            }
             "add" => op(Add, arg_1)?,
             "rm" => op(Remove, arg_1)?,
             "edit" => op(Edit, arg_1)?,
@@ -109,7 +114,6 @@ fn init(name: String) -> io::Result<()> {
     fs::create_dir("pages")?; // Used to store the user's pages
     File::create(P::new("pages/index.md"))?;
 
-    // create_templates()?;
     if name != String::from("") {
         config::configure(name)?;
     } else {
