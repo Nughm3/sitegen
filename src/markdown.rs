@@ -1,3 +1,4 @@
+use glob::glob;
 use pulldown_cmark::{html, Options, Parser};
 use std::{
     fs,
@@ -30,10 +31,13 @@ pub fn parse(file: &Path) -> io::Result<()> {
     let mut html_output = String::new();
     html::push_html(&mut html_output, parser);
 
-    let output = template.replace("{{ body }}", &html_output).replace(
-        "{{ title }}",
-        &titlecase(file.file_stem().unwrap().to_str().unwrap()),
-    );
+    let output = template
+        .replace("{{ body }}", &html_output)
+        .replace(
+            "{{ title }}",
+            &titlecase(file.file_stem().unwrap().to_str().unwrap()),
+        )
+        .replace("{{ tree }}", &tree()?);
 
     fs::write(
         format!(
@@ -45,4 +49,18 @@ pub fn parse(file: &Path) -> io::Result<()> {
     )?;
 
     Ok(())
+}
+
+fn tree() -> io::Result<String> {
+    let mut html = String::new();
+    for entry in glob("./**/*.md")
+        .expect("Failed to read directories")
+        .filter_map(|e| e.ok())
+    {
+        let name = entry.display().to_string();
+        let link = name[..name.len()-3].to_string();
+        let name = name[..name.len()-3].to_string();
+        html.push_str(format!("<a href=\"{}\">{}</a>\n", link, name).as_str());
+    }
+    Ok(html)
 }
