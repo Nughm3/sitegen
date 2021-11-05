@@ -1,6 +1,6 @@
+use color_eyre::eyre::Result;
 use log::*;
 use simplelog::*;
-use std::error::Error;
 use std::fs::File;
 use std::sync::mpsc;
 use std::sync::Arc;
@@ -99,7 +99,7 @@ impl Worker {
     }
 }
 
-pub fn init_logging() -> Result<(), Box<dyn Error>> {
+pub fn init_logging() -> Result<()> {
     CombinedLogger::init(vec![
         TermLogger::new(
             LevelFilter::Info,

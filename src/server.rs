@@ -1,21 +1,21 @@
 use super::*;
+use color_eyre::eyre::Result;
 use fs_extra::{copy_items, dir::CopyOptions};
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::{
     collections::HashMap,
     env,
-    error::Error,
     ffi::OsStr,
     fs,
-    io::{self, ErrorKind},
+    io::ErrorKind,
     path::{Path, PathBuf},
     process,
     sync::Arc,
 };
 use walkdir::WalkDir;
 
-pub fn run() -> Result<(), Box<dyn Error>> {
+pub fn run() -> Result<()> {
     // Run a check for a server configuration file here
     // If it's absent, the server should not start
     if !Path::new("server.json").exists() {
@@ -111,7 +111,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> io::Result<()> {
+fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> Result<()> {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer)?;
     let mut status = "";
@@ -144,7 +144,7 @@ fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> io::Resu
     Ok(())
 }
 
-fn route(index_page: Option<PathBuf>) -> io::Result<HashMap<String, PathBuf>> {
+fn route(index_page: Option<PathBuf>) -> Result<HashMap<String, PathBuf>> {
     let mut map = HashMap::new();
     if index_page != None {
         map.insert("/".to_owned(), index_page.unwrap());

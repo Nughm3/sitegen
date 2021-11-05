@@ -1,11 +1,12 @@
 [package]
 name = "sitegen"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Simple rusty static site generator"
 license = "MIT"
 
 [dependencies]
+color-eyre = "0.5.11"
 fs_extra = "1.2.0"
 glob = "0.3.0"
 log = "0.4.14"

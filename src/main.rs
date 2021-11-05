@@ -1,8 +1,8 @@
+use color_eyre::eyre::Result;
 use sitegen::*;
 use std::io::ErrorKind::{AlreadyExists, PermissionDenied};
 use std::{
     env,
-    error::Error,
     fs::{self, File},
     io,
     path::Path,
@@ -33,7 +33,7 @@ enum OpType {
     Edit,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     use OpType::*;
     let args = Args::new();
 
@@ -100,7 +100,7 @@ fn new(name: Option<&str>) {
     }
 }
 
-fn init(name: String) -> io::Result<()> {
+fn init(name: String) -> Result<()> {
     type P = Path;
     File::create("server.json")?; // Server configuration file
     File::create("log.txt")?; // Server log file
@@ -133,7 +133,7 @@ fn init(name: String) -> io::Result<()> {
 }
 
 // op for 'operation'
-fn op(action: OpType, name: Option<&str>) -> io::Result<()> {
+fn op(action: OpType, name: Option<&str>) -> Result<()> {
     if let Some(n) = name {
         match action {
             OpType::Add => {
@@ -183,7 +183,7 @@ fn op(action: OpType, name: Option<&str>) -> io::Result<()> {
     Ok(())
 }
 
-fn config() -> io::Result<()> {
+fn config() -> Result<()> {
     if Path::new("server.json").exists() {
         if let Ok(e) = env::var("EDITOR") {
             process::Command::new(e).arg(" server.json").spawn()?;

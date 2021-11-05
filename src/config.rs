@@ -1,11 +1,7 @@
+use color_eyre::eyre::Result;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{
-    default::Default,
-    fs,
-    io::{Read, Result},
-    path::PathBuf,
-};
+use std::{default::Default, fs, io::Read, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {

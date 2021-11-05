@@ -1,3 +1,4 @@
+use color_eyre::eyre::Result;
 use glob::glob;
 use pulldown_cmark::{html, Options, Parser};
 use std::{
@@ -8,7 +9,7 @@ use std::{
 };
 use titlecase::titlecase;
 
-pub fn parse(file: &Path) -> io::Result<()> {
+pub fn parse(file: &Path) -> Result<()> {
     // Enable all modern Markdown features
     let mut options = Options::empty();
     options.insert(Options::ENABLE_FOOTNOTES);
@@ -58,8 +59,8 @@ fn tree() -> io::Result<String> {
         .filter_map(|e| e.ok())
     {
         let name = entry.display().to_string();
-        let link = name[..name.len()-3].to_string();
-        let name = name[..name.len()-3].to_string();
+        let link = name[..name.len() - 3].to_string();
+        let name = name[..name.len() - 3].to_string();
         html.push_str(format!("<a href=\"{}\">{}</a>\n", link, name).as_str());
     }
     Ok(html)
