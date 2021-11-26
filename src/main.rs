@@ -35,6 +35,7 @@ enum OpType {
 
 fn main() -> Result<()> {
     use OpType::*;
+    setup();
     let args = Args::new();
 
     if let Some(cmd) = args.get(0) {
@@ -212,4 +213,10 @@ fn help(unrecognized: bool) {
     eprintln!("  rm <name>   -> Remove a page");
     eprintln!("  edit <name> -> Edit a page's file (Requires EDITOR)");
     eprintln!("  config      -> Edit your project's configuration file (Requires EDITOR)");
+}
+
+fn setup() {
+    if let Err(_) = env::var("RUST_BACKTRACE") {
+        env::set_var("RUST_BACKTRACE", "1");
+    }
 }
