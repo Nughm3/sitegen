@@ -13,7 +13,7 @@ struct Args(Vec<String>);
 
 impl Args {
     fn new() -> Args {
-        let mut c = env::args().collect::<Vec<String>>();
+        let mut c: Vec<String> = env::args().collect();
         c.remove(0);
         Args(c)
     }
@@ -97,7 +97,7 @@ fn new(name: Option<&str>) {
         io::stdin()
             .read_line(&mut name)
             .expect("Failed to read line");
-        new(Some(&name.trim()));
+        new(Some(name.trim()));
     }
 }
 
@@ -115,7 +115,7 @@ fn init(name: String) -> Result<()> {
     fs::create_dir("pages")?; // Used to store the user's pages
     File::create(P::new("pages/index.md"))?;
 
-    if name != String::from("") {
+    if name != *"" {
         config::configure(name)?;
     } else {
         let name = env::current_dir()?;
@@ -149,7 +149,7 @@ fn op(action: OpType, name: Option<&str>) -> Result<()> {
                     eprint!("This will remove the page {}, continue? [Y/n] ", n);
                     let mut action = String::new();
                     io::stdin().read_line(&mut action)?;
-                    if action.to_lowercase() == String::from("n") {
+                    if action.to_lowercase() == *"n" {
                         println!("Cancelled!");
                     } else {
                         fs::remove_dir_all(n)?;
@@ -179,7 +179,7 @@ fn op(action: OpType, name: Option<&str>) -> Result<()> {
         eprint!("Page name >> ");
         let mut name = String::new();
         io::stdin().read_line(&mut name)?;
-        op(action, Some(&name.trim()))?;
+        op(action, Some(name.trim()))?;
     }
     Ok(())
 }
@@ -216,7 +216,7 @@ fn help(unrecognized: bool) {
 }
 
 fn setup() {
-    if let Err(_) = env::var("RUST_BACKTRACE") {
+    if env::var("RUST_BACKTRACE").is_err() {
         env::set_var("RUST_BACKTRACE", "1");
     }
 }

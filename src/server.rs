@@ -47,7 +47,7 @@ pub fn run() -> Result<()> {
         copy_inside: true,
         ..Default::default()
     };
-    copy_items(&vec!["pages"], "compiled", &copy_options)?;
+    copy_items(&["pages"], "compiled", &copy_options)?;
 
     // Find each markdown file and parse it to HTML
     env::set_current_dir("compiled")?;
@@ -81,7 +81,7 @@ pub fn run() -> Result<()> {
         );
         let mut response = String::new();
         std::io::stdin().read_line(&mut response)?;
-        if response.to_lowercase() != String::from("y") {
+        if response.to_lowercase() != *"y" {
             process::exit(1);
         }
     }
@@ -113,7 +113,7 @@ pub fn run() -> Result<()> {
 
 fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> Result<()> {
     let mut buffer = [0; 1024];
-    stream.read(&mut buffer)?;
+    stream.read_exact(&mut buffer)?;
     let mut status = "";
     let mut filename: Option<PathBuf> = None;
 
@@ -138,7 +138,7 @@ fn handle(mut stream: TcpStream, map: Arc<HashMap<String, PathBuf>>) -> Result<(
         contents
     );
 
-    stream.write(response.as_bytes())?;
+    stream.write_all(response.as_bytes())?;
     stream.flush()?;
 
     Ok(())
